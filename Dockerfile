@@ -6,10 +6,12 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml* package-lock.json* ./
 COPY prisma ./prisma/
 
-RUN npm ci
+RUN if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; elif [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 # Rebuild the source code only when needed
 FROM base AS builder
