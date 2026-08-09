@@ -298,6 +298,8 @@ export default function AdminPage() {
       setThumbnailUrl(finalThumbnail);
     }
 
+    const finalEmbed = embedUrl.trim() || (gameType === 'THREEJS_3D' ? '/#' : 'https://html5.gamedistribution.com/rvvASyc0/c70c1e82845d4c82b49b380ed5b4b1a4/index.html');
+
     try {
       if (editingGame) {
         const res = await fetch(`/api/games/${editingGame.id}`, {
@@ -308,8 +310,9 @@ export default function AdminPage() {
             description,
             category,
             thumbnailUrl: finalThumbnail,
-            embedUrl,
+            embedUrl: finalEmbed,
             gameType,
+            threeEngineId,
             tags: [category, gameType],
           }),
         });
@@ -331,7 +334,7 @@ export default function AdminPage() {
             description,
             category,
             thumbnailUrl: finalThumbnail,
-            embedUrl,
+            embedUrl: finalEmbed,
             gameType,
             threeEngineId,
             tags: [category, gameType],

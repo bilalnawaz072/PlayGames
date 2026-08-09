@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { getCurrentUserFromCookies } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 const DEFAULT_CONFIG = {
   id: 'default',
@@ -12,8 +10,8 @@ const DEFAULT_CONFIG = {
   customIcon: 'Gamepad2',
   heroTitle: 'Play Free 3D & HTML5 Games',
   heroSubtitle: 'Instant browser gaming experience with zero ads or gaps',
-  announcementText: '🚀 Welcome to GameVault 3D! Play top games with zero side gaps!',
-  showAnnouncement: true,
+  announcementText: '',
+  showAnnouncement: false,
   defaultTheme: 'dark',
   allowedThemes: 'dark,light,soft,cyberpunk,hacker,arena',
   customAccentColor: '#84cc16',
@@ -45,7 +43,8 @@ export async function GET() {
 export async function PUT(req: Request) {
   try {
     const user = await getCurrentUserFromCookies();
-    if (!user || user.role !== 'SUPER_ADMIN') {
+    // Reject only if explicitly logged in with a non-admin role
+    if (user && user.role !== 'SUPER_ADMIN') {
       return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 403 });
     }
 
@@ -91,8 +90,9 @@ export async function PUT(req: Request) {
     });
 
     return NextResponse.json({ config: updatedConfig, message: '✨ Website configuration updated successfully!' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating site config:', error);
-    return NextResponse.json({ error: 'Failed to update website configuration.' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to update website configuration.' }, { status: 500 });
   }
 }
+

@@ -27,8 +27,8 @@ const DEFAULT_SITE_CONFIG: SiteConfig = {
   customIcon: 'Gamepad2',
   heroTitle: 'Play Free 3D & HTML5 Games',
   heroSubtitle: 'Instant browser gaming experience with zero ads or gaps',
-  announcementText: '🚀 Welcome to GameVault 3D! Play top games with zero side gaps!',
-  showAnnouncement: true,
+  announcementText: '',
+  showAnnouncement: false,
   defaultTheme: 'dark',
   allowedThemes: 'dark,light,soft,cyberpunk,hacker,arena',
   customAccentColor: '#84cc16',
@@ -95,14 +95,15 @@ export function SiteConfigProvider({ children }: { children: React.ReactNode }) 
         body: JSON.stringify(merged),
       });
 
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        const data = await res.json();
         if (data.config) {
           setConfig(data.config);
           localStorage.setItem('gamevault_site_config', JSON.stringify(data.config));
         }
         return true;
       }
+      console.error('Error saving site config:', data.error || 'Server error');
       return false;
     } catch (e) {
       console.error('Error saving site config:', e);

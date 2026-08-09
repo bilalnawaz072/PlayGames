@@ -1,6 +1,7 @@
 // Prisma Schema for Pay123 3D Game Platform
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -105,8 +106,8 @@ model SiteConfig {
   customIcon        String   @default("Gamepad2")
   heroTitle         String   @default("Play Free 3D & HTML5 Games")
   heroSubtitle      String   @default("Instant browser gaming experience with zero ads or gaps")
-  announcementText  String   @default("🚀 Welcome to GameVault! Play top 3D & HTML5 Games instantly!")
-  showAnnouncement  Boolean  @default(true)
+  announcementText  String   @default("")
+  showAnnouncement  Boolean  @default(false)
   defaultTheme      String   @default("dark")
   allowedThemes     String   @default("dark,light,soft,cyberpunk,hacker,arena")
   customAccentColor String   @default("#84cc16")

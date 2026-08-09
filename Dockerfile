@@ -4,7 +4,7 @@ FROM node:22-alpine AS base
 
 # Step 1: Install dependencies
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 # Enable pnpm v9 for Node 22 compatibility
@@ -32,6 +32,7 @@ RUN pnpm run build
 
 # Step 3: Production Runner
 FROM base AS runner
+RUN apk add --no-cache openssl
 WORKDIR /app
 
 ENV NODE_ENV=production
