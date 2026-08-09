@@ -11,7 +11,6 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) {
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
-  const [role, setRole] = useState<'PLAYER' | 'DEVELOPER'>('PLAYER');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,7 +26,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
 
     try {
       const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
-      const body = mode === 'login' ? { email, password } : { name, email, password, role };
+      const body = mode === 'login' ? { email, password } : { name, email, password, role: 'USER' };
 
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -69,39 +68,9 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
             {mode === 'login' ? 'Welcome Back!' : 'Join GameVault 3D Platform'}
           </h2>
           <p className="text-xs text-sky-400 mt-1 font-medium">
-            {mode === 'login' ? 'Sign in to your player or developer account' : 'Register as a Player or Game Developer'}
+            {mode === 'login' ? 'Sign in to your player or admin account' : 'Create a User account to play & save games'}
           </p>
         </div>
-
-        {/* Role Toggle for Register Mode */}
-        {mode === 'register' && (
-          <div className="grid grid-cols-2 gap-2 p-1 bg-slate-950 rounded-xl mb-5 border border-slate-800">
-            <button
-              type="button"
-              onClick={() => setRole('PLAYER')}
-              className={`flex items-center justify-center gap-2 py-2 rounded-lg font-bold text-xs transition-all ${
-                role === 'PLAYER'
-                  ? 'bg-gradient-to-r from-lime-500 to-lime-600 text-slate-950 shadow-md'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <User className="w-4 h-4" />
-              <span>Gamer / Player</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('DEVELOPER')}
-              className={`flex items-center justify-center gap-2 py-2 rounded-lg font-bold text-xs transition-all ${
-                role === 'DEVELOPER'
-                  ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Code className="w-4 h-4" />
-              <span>Game Developer</span>
-            </button>
-          </div>
-        )}
 
         {/* Error Alert */}
         {error && (
@@ -166,7 +135,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
             ) : (
               <>
                 <UserPlus className="w-4 h-4" />
-                <span>CREATE {role} ACCOUNT</span>
+                <span>CREATE ACCOUNT</span>
               </>
             )}
           </button>
@@ -175,7 +144,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
         {/* Secure Authentication Notice */}
         <div className="mt-5 p-3 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400 space-y-1">
           <p className="font-semibold text-lime-400">🔒 Secure Authentication:</p>
-          <p>Admin and Developer access requires valid environment-configured credentials.</p>
+          <p>Admin management requires valid environment-configured credentials.</p>
         </div>
 
         {/* Mode Switcher */}

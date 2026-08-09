@@ -10,9 +10,8 @@ datasource db {
 }
 
 enum UserRole {
-  PLAYER
-  DEVELOPER
-  SUPER_ADMIN
+  USER
+  ADMIN
 }
 
 enum GameStatus {
@@ -31,14 +30,14 @@ model User {
   name         String
   email        String     @unique
   passwordHash String
-  role         UserRole   @default(PLAYER)
+  role         UserRole   @default(USER)
   avatar       String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  submittedGames Game[]     @relation("DeveloperGames")
-  favorites      Favorite[]
-  ratings        Rating[]
+  createdGames Game[]     @relation("UserGames")
+  favorites    Favorite[]
+  ratings      Rating[]
 }
 
 model Game {
@@ -59,7 +58,7 @@ model Game {
   likesCount    Int        @default(0)
   dislikesCount Int        @default(0)
   developerId   String?
-  developer     User?      @relation("DeveloperGames", fields: [developerId], references: [id], onDelete: SetNull)
+  developer     User?      @relation("UserGames", fields: [developerId], references: [id], onDelete: SetNull)
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 

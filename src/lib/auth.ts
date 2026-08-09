@@ -8,7 +8,7 @@ export interface TokenPayload {
   userId: string;
   email: string;
   name: string;
-  role: 'PLAYER' | 'DEVELOPER' | 'SUPER_ADMIN';
+  role: 'USER' | 'ADMIN';
 }
 
 export async function hashPassword(password: string): Promise<string> {

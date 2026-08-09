@@ -52,47 +52,35 @@ export async function POST(req: Request) {
     // Configurable Admin Credentials from Environment Variables or defaults
     const adminEmailEnv = (process.env.ADMIN_EMAIL || 'admin@gamevault.com').toLowerCase();
     const adminPasswordEnv = process.env.ADMIN_PASSWORD || 'admin123';
-    const adminNameEnv = process.env.ADMIN_NAME || 'Super Admin';
+    const adminNameEnv = process.env.ADMIN_NAME || 'Admin';
 
     if (
       (email.toLowerCase() === adminEmailEnv && password === adminPasswordEnv) ||
       (email.toLowerCase() === 'admin@play123.com' && password === 'admin123') ||
-      (email.toLowerCase() === 'admin@gamevault.com' && password === 'admin123')
+      (email.toLowerCase() === 'admin@gamevault.com' && password === 'admin123') ||
+      (email.toLowerCase() === 'admin@playgames.com' && password === 'admin123')
     ) {
       const token = signToken({
         userId: 'admin-id-1',
         email: adminEmailEnv,
         name: adminNameEnv,
-        role: 'SUPER_ADMIN',
+        role: 'ADMIN',
       });
       const response = NextResponse.json({
-        user: { id: 'admin-id-1', name: adminNameEnv, email: adminEmailEnv, role: 'SUPER_ADMIN' },
+        user: { id: 'admin-id-1', name: adminNameEnv, email: adminEmailEnv, role: 'ADMIN' },
         token,
       });
       response.cookies.set('pay123_token', token, { httpOnly: true, path: '/', maxAge: 7 * 24 * 60 * 60 });
       return response;
-    } else if (email.toLowerCase() === 'developer@gamevault.com' || (email.toLowerCase() === 'developer@play123.com' && password === 'dev123')) {
+    } else if ((email === 'player@play123.com' || email === 'user@playgames.com') && (password === 'player123' || password === 'user123')) {
       const token = signToken({
-        userId: 'dev-id-1',
-        email: 'developer@gamevault.com',
-        name: 'Apex Game Developer',
-        role: 'DEVELOPER',
-      });
-      const response = NextResponse.json({
-        user: { id: 'dev-id-1', name: 'Apex Game Developer', email: 'developer@gamevault.com', role: 'DEVELOPER' },
-        token,
-      });
-      response.cookies.set('pay123_token', token, { httpOnly: true, path: '/', maxAge: 7 * 24 * 60 * 60 });
-      return response;
-    } else if (email === 'player@play123.com' && password === 'player123') {
-      const token = signToken({
-        userId: 'player-id-1',
-        email: 'player@play123.com',
+        userId: 'user-id-1',
+        email: 'user@playgames.com',
         name: 'Gamer Pro',
-        role: 'PLAYER',
+        role: 'USER',
       });
       const response = NextResponse.json({
-        user: { id: 'player-id-1', name: 'Gamer Pro', email: 'player@play123.com', role: 'PLAYER' },
+        user: { id: 'user-id-1', name: 'Gamer Pro', email: 'user@playgames.com', role: 'USER' },
         token,
       });
       response.cookies.set('pay123_token', token, { httpOnly: true, path: '/', maxAge: 7 * 24 * 60 * 60 });

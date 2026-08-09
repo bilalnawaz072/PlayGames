@@ -49,7 +49,7 @@ export async function GET() {
 async function handleUpdateConfig(req: Request) {
   try {
     const user = await getCurrentUserFromCookies();
-    if (user && user.role !== 'SUPER_ADMIN') {
+    if (user && user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 403 });
     }
 

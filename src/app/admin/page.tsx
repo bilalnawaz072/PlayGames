@@ -104,7 +104,7 @@ export default function AdminPage() {
       const res = await fetch('/api/auth/me');
       if (res.ok) {
         const data = await res.json();
-        if (data.user && data.user.role === 'SUPER_ADMIN') {
+        if (data.user && data.user.role === 'ADMIN') {
           setUser(data.user);
           fetchGames();
         } else {
@@ -139,11 +139,11 @@ export default function AdminPage() {
         return;
       }
 
-      if (data.user && data.user.role === 'SUPER_ADMIN') {
+      if (data.user && data.user.role === 'ADMIN') {
         setUser(data.user);
         fetchGames();
       } else {
-        setLoginError('Access denied: Account is not a Super Admin.');
+        setLoginError('Access denied: Account is not an Admin.');
       }
     } catch (err) {
       setLoginError('Error logging in. Please verify credentials.');

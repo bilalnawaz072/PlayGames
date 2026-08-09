@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic';
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
     const user = await getCurrentUserFromCookies();
-    if (!user || user.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Forbidden. Super Admin access required.' }, { status: 403 });
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Forbidden. Admin access required.' }, { status: 403 });
     }
 
     const { action, isFeatured } = await req.json(); // action: "APPROVE", "REJECT", "TOGGLE_FEATURE"

@@ -31,7 +31,7 @@ export default function Navbar({ onSearchChange, onSortChange, toggleSidebar }: 
       const res = await fetch('/api/auth/me');
       if (res.ok) {
         const data = await res.json();
-        if (data.user && data.user.role === 'SUPER_ADMIN') {
+        if (data.user && data.user.role === 'ADMIN') {
           setIsAdminLoggedIn(true);
         }
       }

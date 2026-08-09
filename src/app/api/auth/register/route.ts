@@ -11,7 +11,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Name, email, and password are required.' }, { status: 400 });
     }
 
-    const assignedRole = role === 'DEVELOPER' ? 'DEVELOPER' : 'PLAYER';
+    const assignedRole = role === 'ADMIN' ? 'ADMIN' : 'USER';
 
     // Try to register in DB if available
     try {

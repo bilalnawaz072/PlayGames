@@ -87,99 +87,35 @@ const GAMES: any[] = [
     playsCount: 1980,
     likesCount: 390,
     dislikesCount: 8,
-  },
-  {
-    id: 'game-wave-dash-3d',
-    title: 'Wave Dash 3D',
-    slug: 'wave-dash-3d',
-    description: 'High-speed synthwave 3D runner. Dodge obstacles, collect neon energy spheres, and push your reaction speed to the limits!',
-    category: '3D Games',
-    tags: '3d,runner,synthwave,action',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80',
-    embedUrl: '/#',
-    gameType: 'THREEJS_3D',
-    threeEngineId: 'WAVE_DASH',
-    isFeatured: true,
-    playsCount: 4120,
-    likesCount: 910,
-    dislikesCount: 15,
-  },
-  {
-    id: 'game-cyber-drift-3d',
-    title: 'Cyber Drift 3D',
-    slug: 'cyber-drift-3d',
-    description: 'Enter a futuristic cyberpunk tunnel circuit. Weave through laser gates and drift past glowing barriers.',
-    category: 'Drift',
-    tags: '3d,drift,cyberpunk,car',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&auto=format&fit=crop&q=80',
-    embedUrl: '/#',
-    gameType: 'THREEJS_3D',
-    threeEngineId: 'CYBER_DRIFT',
-    isFeatured: true,
-    playsCount: 3250,
-    likesCount: 780,
-    dislikesCount: 22,
-  },
-  {
-    id: 'game-cube-stack-3d',
-    title: 'Cube Stack 3D',
-    slug: 'cube-stack-3d',
-    description: 'Precision timing block stacker! Stack moving 3D cubes as high as possible without trimming off the edges.',
-    category: 'Puzzle',
-    tags: '3d,puzzle,arcade,blocks',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
-    embedUrl: '/#',
-    gameType: 'THREEJS_3D',
-    threeEngineId: 'CUBE_STACK',
-    isFeatured: false,
-    playsCount: 2840,
-    likesCount: 620,
-    dislikesCount: 10,
-  },
-  {
-    id: 'game-tunnel-runner-3d',
-    title: 'Tunnel Runner 3D',
-    slug: 'tunnel-runner-3d',
-    description: 'Sprint through a 360-degree cylindrical space tunnel. Rotate your path to avoid falling obstacles.',
-    category: '3D Games',
-    tags: '3d,tunnel,arcade,speed',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&auto=format&fit=crop&q=80',
-    embedUrl: '/#',
-    gameType: 'THREEJS_3D',
-    threeEngineId: 'TUNNEL_RUNNER',
-    isFeatured: false,
-    playsCount: 1980,
-    likesCount: 430,
-    dislikesCount: 8,
-  },
+  }
 ];
 
 async function main() {
   console.log('🌱 Seeding PostgreSQL Database with default games...');
 
   const adminPasswordHash = await bcrypt.hash('admin123', 10);
-  const developerPasswordHash = await bcrypt.hash('dev123', 10);
+  const userPasswordHash = await bcrypt.hash('user123', 10);
 
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@playgames.com' },
-    update: {},
+    update: { role: UserRole.ADMIN },
     create: {
-      name: 'Super Admin',
+      name: 'Admin',
       email: 'admin@playgames.com',
       passwordHash: adminPasswordHash,
-      role: UserRole.SUPER_ADMIN,
+      role: UserRole.ADMIN,
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     },
   });
 
-  const developerUser = await prisma.user.upsert({
-    where: { email: 'developer@playgames.com' },
-    update: {},
+  const normalUser = await prisma.user.upsert({
+    where: { email: 'user@playgames.com' },
+    update: { role: UserRole.USER },
     create: {
-      name: 'Apex Game Developer',
-      email: 'developer@playgames.com',
-      passwordHash: developerPasswordHash,
-      role: UserRole.DEVELOPER,
+      name: 'Player One',
+      email: 'user@playgames.com',
+      passwordHash: userPasswordHash,
+      role: UserRole.USER,
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
     },
   });
@@ -233,7 +169,7 @@ async function main() {
         playsCount: g.playsCount,
         likesCount: g.likesCount,
         dislikesCount: g.dislikesCount,
-        developerId: developerUser.id,
+        developerId: adminUser.id,
       },
     });
   }
