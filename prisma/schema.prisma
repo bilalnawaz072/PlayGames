@@ -96,3 +96,24 @@ model Rating {
 
   @@unique([userId, gameId])
 }
+
+model SiteConfig {
+  id                String   @id @default("default")
+  siteName          String   @default("GameVault")
+  siteTagline       String   @default("3D")
+  logoUrl           String?  
+  customIcon        String   @default("Gamepad2")
+  heroTitle         String   @default("Play Free 3D & HTML5 Games")
+  heroSubtitle      String   @default("Instant browser gaming experience with zero ads or gaps")
+  announcementText  String   @default("🚀 Welcome to GameVault! Play top 3D & HTML5 Games instantly!")
+  showAnnouncement  Boolean  @default(true)
+  defaultTheme      String   @default("dark")
+  allowedThemes     String   @default("dark,light,soft,cyberpunk,hacker,arena")
+  customAccentColor String   @default("#84cc16")
+  showAiBuddy       Boolean  @default(true)
+  showMultiScreen   Boolean  @default(true)
+  showFeatured3D    Boolean  @default(true)
+  footerText        String   @default("GameVault 3D Gaming Platform. All rights reserved.")
+  updatedAt         DateTime @updatedAt
+}
+

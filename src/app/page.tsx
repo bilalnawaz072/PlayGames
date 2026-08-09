@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import GameCard from '@/components/GameCard';
 import { GameItem } from '@/lib/games-data';
-import { Sparkles, Box, ShieldAlert } from 'lucide-react';
+import { Sparkles, Box, ShieldAlert, Gamepad2 } from 'lucide-react';
 import Link from 'next/link';
+import { useSiteConfig } from '@/components/SiteConfigProvider';
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -13,6 +14,8 @@ export default function HomePage() {
 
   const [games, setGames] = useState<GameItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const { config } = useSiteConfig();
 
   useEffect(() => {
     fetchGames();
@@ -41,7 +44,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col font-sans transition-colors duration-300">
       
-      {/* Sleek Top Navbar with Integrated Search, Sort & Theme Controls */}
+      {/* Sleek Top Navbar with Custom Brand & Theme Controls */}
       <Navbar
         onSearchChange={(q) => setSearchQuery(q)}
         onSortChange={(sort) => setSortBy(sort)}
@@ -50,8 +53,8 @@ export default function HomePage() {
       {/* Main Home Content Container */}
       <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6">
         
-        {/* Featured 3D Highlights (If Any) */}
-        {hero3DGames.length > 0 && !searchQuery && (
+        {/* Featured 3D Highlights (Controlled via Admin Customization Studio) */}
+        {config.showFeatured3D && hero3DGames.length > 0 && !searchQuery && (
           <section className="space-y-3">
             <h2 className="text-lg md:text-xl font-extrabold flex items-center gap-2 theme-text-primary">
               <Box className="w-5 h-5 theme-accent" />
@@ -88,13 +91,13 @@ export default function HomePage() {
               </div>
               <p className="text-lg font-extrabold theme-text-primary">No games currently added.</p>
               <p className="text-xs theme-text-secondary max-w-md mx-auto">
-                Clean platform ready for actual games. Sign in as Admin to publish or duplicate real 3D / HTML5 games!
+                Clean platform ready for actual games. Sign in as Admin to publish real 3D & HTML5 games or redesign site branding!
               </p>
               <Link
                 href="/admin"
                 className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-full bg-lime-500 hover:bg-lime-400 text-slate-950 font-black text-xs shadow-lg transition-all"
               >
-                <span>Go to Admin Portal</span>
+                <span>Go to Admin Studio</span>
               </Link>
             </div>
           ) : (
@@ -107,6 +110,19 @@ export default function HomePage() {
         </section>
 
       </main>
+
+      {/* Footer with Dynamic Custom Credits */}
+      <footer className="border-t theme-border py-6 px-4 theme-card mt-12">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs theme-text-secondary">
+          <div className="flex items-center gap-2 font-extrabold theme-text-primary">
+            <Gamepad2 className="w-4 h-4 text-lime-400" />
+            <span>{config.siteName || 'GameVault'} {config.siteTagline}</span>
+          </div>
+          <p className="text-center sm:text-right font-medium">
+            {config.footerText || 'All rights reserved.'}
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

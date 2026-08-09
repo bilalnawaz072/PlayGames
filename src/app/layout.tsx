@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import { SiteConfigProvider } from '@/components/SiteConfigProvider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -13,8 +15,6 @@ export const metadata: Metadata = {
   keywords: '3D games, webgl games, GameVault 3D, online games, html5 games, mahjong, drift racing, game developer portal',
 };
 
-import { ThemeProvider } from '@/components/ThemeProvider';
-
 export default function RootLayout({
   children,
 }: {
@@ -23,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen antialiased selection:bg-lime-400 selection:text-slate-950">
-        <ThemeProvider>{children}</ThemeProvider>
+        <SiteConfigProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </SiteConfigProvider>
       </body>
     </html>
   );

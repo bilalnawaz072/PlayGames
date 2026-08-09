@@ -4,13 +4,15 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DeleteGameModal from '@/components/DeleteGameModal';
 import Link from 'next/link';
-import { Plus, Edit2, Trash2, ExternalLink, Gamepad2, Upload, AlertCircle, CheckCircle, Search, Copy, Sparkles, Lock, LogIn, Check, Image as ImageIcon } from 'lucide-react';
+import { Plus, Edit2, Trash2, ExternalLink, Gamepad2, Upload, AlertCircle, CheckCircle, Search, Copy, Sparkles, Lock, LogIn, Check, Palette, Settings, Layout, Image as ImageIcon, Flame, Box, Trophy, Crown, Zap, Megaphone, Save } from 'lucide-react';
 import { INITIAL_CATEGORIES, GameItem } from '@/lib/games-data';
 import { getAutoUnsplashImage } from '@/lib/unsplash-helper';
+import { useSiteConfig } from '@/components/SiteConfigProvider';
 
 export default function AdminPage() {
   const [user, setUser] = useState<any>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [activeTab, setActiveTab] = useState<'games' | 'customization'>('games');
 
   // Login Form State for Admin Login Page
   const [adminEmail, setAdminEmail] = useState('');
@@ -32,6 +34,7 @@ export default function AdminPage() {
   const [gameToDelete, setGameToDelete] = useState<GameItem | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // Game Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('Demo Games');
@@ -46,10 +49,51 @@ export default function AdminPage() {
   const [formLoading, setFormLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  // WEBSITE CUSTOMIZATION STUDIO STATE
+  const { config, updateConfig } = useSiteConfig();
+  const [customSiteName, setCustomSiteName] = useState(config.siteName);
+  const [customSiteTagline, setCustomSiteTagline] = useState(config.siteTagline);
+  const [customLogoUrl, setCustomLogoUrl] = useState(config.logoUrl || '');
+  const [customIcon, setCustomIcon] = useState(config.customIcon);
+  const [heroTitle, setHeroTitle] = useState(config.heroTitle);
+  const [heroSubtitle, setHeroSubtitle] = useState(config.heroSubtitle);
+  const [announcementText, setAnnouncementText] = useState(config.announcementText);
+  const [showAnnouncement, setShowAnnouncement] = useState(config.showAnnouncement);
+  const [defaultTheme, setDefaultTheme] = useState(config.defaultTheme);
+  const [allowedThemes, setAllowedThemes] = useState(config.allowedThemes);
+  const [customAccentColor, setCustomAccentColor] = useState(config.customAccentColor);
+  const [showAiBuddy, setShowAiBuddy] = useState(config.showAiBuddy);
+  const [showMultiScreen, setShowMultiScreen] = useState(config.showMultiScreen);
+  const [showFeatured3D, setShowFeatured3D] = useState(config.showFeatured3D);
+  const [footerText, setFooterText] = useState(config.footerText);
+
+  const [configSaving, setConfigSaving] = useState(false);
+  const [configSuccess, setConfigSuccess] = useState('');
+
   useEffect(() => {
     checkAdminAuth();
     fetchCategories();
   }, []);
+
+  useEffect(() => {
+    if (config) {
+      setCustomSiteName(config.siteName);
+      setCustomSiteTagline(config.siteTagline);
+      setCustomLogoUrl(config.logoUrl || '');
+      setCustomIcon(config.customIcon);
+      setHeroTitle(config.heroTitle);
+      setHeroSubtitle(config.heroSubtitle);
+      setAnnouncementText(config.announcementText);
+      setShowAnnouncement(config.showAnnouncement);
+      setDefaultTheme(config.defaultTheme);
+      setAllowedThemes(config.allowedThemes);
+      setCustomAccentColor(config.customAccentColor);
+      setShowAiBuddy(config.showAiBuddy);
+      setShowMultiScreen(config.showMultiScreen);
+      setShowFeatured3D(config.showFeatured3D);
+      setFooterText(config.footerText);
+    }
+  }, [config]);
 
   const checkAdminAuth = async () => {
     setCheckingAuth(true);
@@ -130,6 +174,50 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSaveSiteConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setConfigSaving(true);
+    setConfigSuccess('');
+
+    const success = await updateConfig({
+      siteName: customSiteName,
+      siteTagline: customSiteTagline,
+      logoUrl: customLogoUrl || null,
+      customIcon: customIcon,
+      heroTitle: heroTitle,
+      heroSubtitle: heroSubtitle,
+      announcementText: announcementText,
+      showAnnouncement: showAnnouncement,
+      defaultTheme: defaultTheme,
+      allowedThemes: allowedThemes,
+      customAccentColor: customAccentColor,
+      showAiBuddy: showAiBuddy,
+      showMultiScreen: showMultiScreen,
+      showFeatured3D: showFeatured3D,
+      footerText: footerText,
+    });
+
+    setConfigSaving(false);
+    if (success) {
+      setConfigSuccess('🎉 Website design & branding updated successfully across all pages!');
+      setTimeout(() => setConfigSuccess(''), 4000);
+    } else {
+      alert('Failed to save website customization settings.');
+    }
+  };
+
+  const toggleThemeInList = (themeName: string) => {
+    const currentList = allowedThemes.split(',').map((t) => t.trim()).filter(Boolean);
+    let updated: string[];
+    if (currentList.includes(themeName)) {
+      if (currentList.length === 1) return; // keep at least 1 theme
+      updated = currentList.filter((t) => t !== themeName);
+    } else {
+      updated = [...currentList, themeName];
+    }
+    setAllowedThemes(updated.join(','));
   };
 
   const openAddModal = () => {
@@ -372,139 +460,497 @@ export default function AdminPage() {
               <div>
                 <div className="flex items-center gap-2 theme-accent font-extrabold text-xs uppercase tracking-wider mb-1">
                   <Gamepad2 className="w-4 h-4" />
-                  <span>GameVault 3D Admin Control Studio</span>
+                  <span>{config.siteName || 'GameVault'} Admin Control Studio</span>
                 </div>
-                <h1 className="text-2xl md:text-3xl font-black theme-text-primary">Admin Game Management</h1>
+                <h1 className="text-2xl md:text-3xl font-black theme-text-primary">Admin Control Center</h1>
                 <p className="text-xs theme-text-secondary mt-1">
-                  Logged in as Super Admin. Add, edit, duplicate, and manage real games.
+                  Manage games, redesign site logo/branding, customized themes, and website settings.
                 </p>
               </div>
 
-              <button
-                onClick={openAddModal}
-                className="px-6 py-2.5 rounded-xl bg-lime-500 hover:bg-lime-400 text-slate-950 font-black text-xs shadow-lg flex items-center gap-2 transform hover:scale-105 transition-all whitespace-nowrap"
-              >
-                <Plus className="w-4 h-4" />
-                <span>ADD NEW GAME</span>
-              </button>
-            </div>
+              {/* Navigation Tabs */}
+              <div className="flex items-center gap-2 p-1 bg-slate-950 rounded-xl border border-slate-800">
+                <button
+                  onClick={() => setActiveTab('games')}
+                  className={`px-4 py-2 rounded-lg font-black text-xs transition-all flex items-center gap-1.5 ${
+                    activeTab === 'games'
+                      ? 'bg-lime-500 text-slate-950 shadow-md'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Gamepad2 className="w-4 h-4" />
+                  <span>GAME LIBRARY</span>
+                </button>
 
-            {/* Search & Stats Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-2xl border shadow-md theme-card">
-              <div className="flex items-center gap-2 text-xs font-extrabold theme-text-primary">
-                <span>Total Active Games:</span>
-                <span className="px-2.5 py-0.5 rounded-full bg-lime-500 text-slate-950 text-xs font-black">
-                  {games.length}
-                </span>
-              </div>
-
-              <div className="relative w-full sm:w-72">
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by title or category..."
-                  className="w-full pl-9 pr-4 py-2 border rounded-xl text-xs focus:outline-none focus:border-lime-500 theme-card"
-                />
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <button
+                  onClick={() => setActiveTab('customization')}
+                  className={`px-4 py-2 rounded-lg font-black text-xs transition-all flex items-center gap-1.5 ${
+                    activeTab === 'customization'
+                      ? 'bg-lime-500 text-slate-950 shadow-md'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Palette className="w-4 h-4" />
+                  <span>🎨 WEBSITE REDESIGN</span>
+                </button>
               </div>
             </div>
 
-            {/* Games Table List */}
-            <div className="theme-card rounded-2xl border overflow-hidden shadow-2xl">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-900/60 theme-text-secondary uppercase font-black tracking-wider border-b theme-border">
-                    <tr>
-                      <th className="py-3 px-4">Game Image & Name</th>
-                      <th className="py-3 px-4">Category</th>
-                      <th className="py-3 px-4">Type</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y theme-border font-medium">
-                    {loading ? (
-                      <tr>
-                        <td colSpan={4} className="py-12 text-center">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lime-500 mx-auto"></div>
-                        </td>
-                      </tr>
-                    ) : filteredGames.length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="py-8 text-center theme-text-secondary font-bold">
-                          No games found. Click "ADD NEW GAME" to add your first real game!
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredGames.map((g) => (
-                        <tr key={g.id} className="hover:bg-slate-800/30 transition-colors">
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-3">
-                              <img
-                                src={g.thumbnailUrl || getAutoUnsplashImage(g.category, g.title)}
-                                alt={g.title}
-                                className="w-12 h-12 rounded-xl object-cover border border-slate-700 shrink-0"
-                              />
-                              <div>
-                                <p className="font-extrabold theme-text-primary text-sm line-clamp-1">{g.title}</p>
-                                <p className="text-[10px] theme-text-secondary line-clamp-1 max-w-md">{g.description}</p>
-                              </div>
-                            </div>
-                          </td>
+            {/* TAB 1: GAME LIBRARY MANAGEMENT */}
+            {activeTab === 'games' && (
+              <div className="space-y-4 animate-fadeIn">
+                
+                {/* Search & Stats Bar */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-2xl border shadow-md theme-card">
+                  <div className="flex items-center gap-2 text-xs font-extrabold theme-text-primary">
+                    <span>Total Active Games:</span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-lime-500 text-slate-950 text-xs font-black">
+                      {games.length}
+                    </span>
+                  </div>
 
-                          <td className="py-3 px-4 text-sky-400 font-bold">{g.category}</td>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <div className="relative w-full sm:w-64">
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search by title or category..."
+                        className="w-full pl-9 pr-4 py-2 border rounded-xl text-xs focus:outline-none focus:border-lime-500 theme-card"
+                      />
+                      <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    </div>
 
-                          <td className="py-3 px-4">
-                            <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px]">
-                              {g.gameType}
-                            </span>
-                          </td>
+                    <button
+                      onClick={openAddModal}
+                      className="px-5 py-2 rounded-xl bg-lime-500 hover:bg-lime-400 text-slate-950 font-black text-xs shadow-lg flex items-center gap-1.5 shrink-0"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>ADD GAME</span>
+                    </button>
+                  </div>
+                </div>
 
-                          <td className="py-3 px-4 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => handleDuplicateGame(g)}
-                                className="p-2 rounded-lg bg-lime-500/20 text-lime-400 hover:bg-lime-500 hover:text-slate-950 transition-colors flex items-center gap-1 font-bold text-[10px]"
-                                title="Duplicate Game Entry"
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                                <span className="hidden sm:inline">DUPLICATE</span>
-                              </button>
-
-                              <Link
-                                href={`/play/${g.slug}`}
-                                target="_blank"
-                                className="p-2 rounded-lg bg-sky-500/20 text-sky-400 hover:bg-sky-500 hover:text-white transition-colors"
-                                title="Open Game Play Page"
-                              >
-                                <ExternalLink className="w-4 h-4" />
-                              </Link>
-
-                              <button
-                                onClick={() => openEditModal(g)}
-                                className="p-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition-colors"
-                                title="Edit Game Details"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-
-                              {/* Amazing Delete Button */}
-                              <button
-                                onClick={() => setGameToDelete(g)}
-                                className="p-2 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-600 hover:text-white transition-colors"
-                                title="Delete Game"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
+                {/* Games Table List */}
+                <div className="theme-card rounded-2xl border overflow-hidden shadow-2xl">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-900/60 theme-text-secondary uppercase font-black tracking-wider border-b theme-border">
+                        <tr>
+                          <th className="py-3 px-4">Game Image & Name</th>
+                          <th className="py-3 px-4">Category</th>
+                          <th className="py-3 px-4">Type</th>
+                          <th className="py-3 px-4 text-right">Actions</th>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody className="divide-y theme-border font-medium">
+                        {loading ? (
+                          <tr>
+                            <td colSpan={4} className="py-12 text-center">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lime-500 mx-auto"></div>
+                            </td>
+                          </tr>
+                        ) : filteredGames.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="py-8 text-center theme-text-secondary font-bold">
+                              No games found. Click "ADD GAME" to publish your first game!
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredGames.map((g) => (
+                            <tr key={g.id} className="hover:bg-slate-800/30 transition-colors">
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-3">
+                                  <img
+                                    src={g.thumbnailUrl || getAutoUnsplashImage(g.category, g.title)}
+                                    alt={g.title}
+                                    className="w-12 h-12 rounded-xl object-cover border border-slate-700 shrink-0"
+                                  />
+                                  <div>
+                                    <p className="font-extrabold theme-text-primary text-sm line-clamp-1">{g.title}</p>
+                                    <p className="text-[10px] theme-text-secondary line-clamp-1 max-w-md">{g.description}</p>
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className="py-3 px-4 text-sky-400 font-bold">{g.category}</td>
+
+                              <td className="py-3 px-4">
+                                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px]">
+                                  {g.gameType}
+                                </span>
+                              </td>
+
+                              <td className="py-3 px-4 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <button
+                                    onClick={() => handleDuplicateGame(g)}
+                                    className="p-2 rounded-lg bg-lime-500/20 text-lime-400 hover:bg-lime-500 hover:text-slate-950 transition-colors flex items-center gap-1 font-bold text-[10px]"
+                                    title="Duplicate Game Entry"
+                                  >
+                                    <Copy className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">DUPLICATE</span>
+                                  </button>
+
+                                  <Link
+                                    href={`/play/${g.slug}`}
+                                    target="_blank"
+                                    className="p-2 rounded-lg bg-sky-500/20 text-sky-400 hover:bg-sky-500 hover:text-white transition-colors"
+                                    title="Open Game Play Page"
+                                  >
+                                    <ExternalLink className="w-4 h-4" />
+                                  </Link>
+
+                                  <button
+                                    onClick={() => openEditModal(g)}
+                                    className="p-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition-colors"
+                                    title="Edit Game Details"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </button>
+
+                                  <button
+                                    onClick={() => setGameToDelete(g)}
+                                    className="p-2 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-600 hover:text-white transition-colors"
+                                    title="Delete Game"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* TAB 2: WEBSITE CUSTOMIZATION & REDESIGN STUDIO */}
+            {activeTab === 'customization' && (
+              <form onSubmit={handleSaveSiteConfig} className="space-y-6 animate-fadeIn">
+                
+                {configSuccess && (
+                  <div className="p-4 rounded-2xl bg-lime-500/20 border border-lime-500/40 text-lime-400 text-sm font-bold flex items-center gap-2 shadow-lg">
+                    <CheckCircle className="w-5 h-5 shrink-0" />
+                    <span>{configSuccess}</span>
+                  </div>
+                )}
+
+                {/* 1. BRANDING & LOGO REDESIGN CARD */}
+                <div className="theme-card rounded-2xl p-6 border shadow-xl space-y-4">
+                  <h2 className="text-lg font-extrabold theme-text-primary flex items-center gap-2 border-b pb-3 theme-border">
+                    <Settings className="w-5 h-5 text-lime-400" />
+                    <span>Website Name, Logo & Brand Identity</span>
+                  </h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    {/* Website Name */}
+                    <div>
+                      <label className="block text-xs font-bold theme-text-primary mb-1">
+                        Website Name / Title *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={customSiteName}
+                        onChange={(e) => setCustomSiteName(e.target.value)}
+                        placeholder="e.g. GameVault, PlayMaster, ApexArena"
+                        className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:border-lime-500 theme-card font-bold"
+                      />
+                    </div>
+
+                    {/* Tagline Badge */}
+                    <div>
+                      <label className="block text-xs font-bold theme-text-primary mb-1">
+                        Brand Tagline Badge *
+                      </label>
+                      <input
+                        type="text"
+                        value={customSiteTagline}
+                        onChange={(e) => setCustomSiteTagline(e.target.value)}
+                        placeholder="e.g. 3D, PRO, VIP, HUB"
+                        className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:border-lime-500 theme-card font-bold"
+                      />
+                    </div>
+
+                    {/* Custom Logo Image URL */}
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold theme-text-primary mb-1">
+                        Custom Logo Image URL (Optional - Replaces Icon)
+                      </label>
+                      <input
+                        type="url"
+                        value={customLogoUrl}
+                        onChange={(e) => setCustomLogoUrl(e.target.value)}
+                        placeholder="Paste logo URL (e.g. https://domain.com/logo.png)"
+                        className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:border-lime-500 theme-card"
+                      />
+                      {customLogoUrl && (
+                        <div className="mt-2 p-3 rounded-xl border theme-border theme-bg-secondary flex items-center gap-3">
+                          <img src={customLogoUrl} alt="Logo Preview" className="w-10 h-10 object-contain rounded-lg border bg-black" />
+                          <span className="text-xs text-lime-400 font-bold">✅ Custom Logo Image Active</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Custom Icon Preset */}
+                    {!customLogoUrl && (
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-bold theme-text-primary mb-2">
+                          Choose Brand Icon Preset
+                        </label>
+                        <div className="flex items-center gap-3 flex-wrap">
+                          {[
+                            { name: 'Gamepad2', icon: Gamepad2, label: 'Gamepad' },
+                            { name: 'Flame', icon: Flame, label: 'Flame' },
+                            { name: 'Box', icon: Box, label: '3D Box' },
+                            { name: 'Trophy', icon: Trophy, label: 'Trophy' },
+                            { name: 'Crown', icon: Crown, label: 'Crown' },
+                            { name: 'Zap', icon: Zap, label: 'Lightning' },
+                            { name: 'Sparkles', icon: Sparkles, label: 'Sparkles' },
+                          ].map((item) => {
+                            const IconComp = item.icon;
+                            const isSelected = customIcon === item.name;
+                            return (
+                              <button
+                                key={item.name}
+                                type="button"
+                                onClick={() => setCustomIcon(item.name)}
+                                className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-xs font-extrabold transition-all ${
+                                  isSelected
+                                    ? 'bg-lime-500 text-slate-950 border-lime-400 scale-105 shadow-md'
+                                    : 'theme-card hover:border-slate-500'
+                                }`}
+                              >
+                                <IconComp className="w-4 h-4" />
+                                <span>{item.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                </div>
+
+                {/* 2. THEMES & VISUAL STYLING CUSTOMIZER CARD */}
+                <div className="theme-card rounded-2xl p-6 border shadow-xl space-y-4">
+                  <h2 className="text-lg font-extrabold theme-text-primary flex items-center gap-2 border-b pb-3 theme-border">
+                    <Palette className="w-5 h-5 text-amber-400" />
+                    <span>Themes & Custom Color Preferences</span>
+                  </h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    {/* Default Theme */}
+                    <div>
+                      <label className="block text-xs font-bold theme-text-primary mb-1">
+                        Default Theme for New Visitors *
+                      </label>
+                      <select
+                        value={defaultTheme}
+                        onChange={(e) => setDefaultTheme(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:border-lime-500 theme-card font-bold"
+                      >
+                        <option value="dark">🌙 Midnight Dark Mode</option>
+                        <option value="light">☀️ Bright Sky Light Mode</option>
+                        <option value="soft">🌸 Soft Pastel Mode</option>
+                        <option value="cyberpunk">🤖 Cyberpunk Neon Mode</option>
+                        <option value="hacker">💻 Hacker Matrix Mode</option>
+                        <option value="arena">🏟️ Game Arena Esports Mode</option>
+                      </select>
+                    </div>
+
+                    {/* Brand Primary Accent Color */}
+                    <div>
+                      <label className="block text-xs font-bold theme-text-primary mb-1">
+                        Brand Primary Accent Color *
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="color"
+                          value={customAccentColor}
+                          onChange={(e) => setCustomAccentColor(e.target.value)}
+                          className="w-12 h-10 rounded-xl cursor-pointer border theme-card p-1"
+                        />
+                        <input
+                          type="text"
+                          value={customAccentColor}
+                          onChange={(e) => setCustomAccentColor(e.target.value)}
+                          placeholder="#84cc16"
+                          className="flex-1 px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:border-lime-500 theme-card font-mono uppercase font-bold"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Enabled Themes Matrix */}
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold theme-text-primary mb-2">
+                        Allowed Themes in User Dropdown (Toggle Enabled Styles)
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                        {[
+                          { key: 'dark', label: '🌙 Dark' },
+                          { key: 'light', label: '☀️ Light' },
+                          { key: 'soft', label: '🌸 Soft' },
+                          { key: 'cyberpunk', label: '🤖 Cyberpunk' },
+                          { key: 'hacker', label: '💻 Hacker' },
+                          { key: 'arena', label: '🏟️ Arena' },
+                        ].map((t) => {
+                          const isAllowed = allowedThemes.split(',').map((x) => x.trim()).includes(t.key);
+                          return (
+                            <button
+                              key={t.key}
+                              type="button"
+                              onClick={() => toggleThemeInList(t.key)}
+                              className={`p-2.5 rounded-xl border text-xs font-bold transition-all text-center ${
+                                isAllowed
+                                  ? 'bg-lime-500/20 text-lime-400 border-lime-500/50'
+                                  : 'bg-slate-900/50 text-slate-500 border-slate-800'
+                              }`}
+                            >
+                              {t.label} {isAllowed ? '✓' : '✗'}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* 3. ANNOUNCEMENT & HERO HEADINGS CARD */}
+                <div className="theme-card rounded-2xl p-6 border shadow-xl space-y-4">
+                  <h2 className="text-lg font-extrabold theme-text-primary flex items-center gap-2 border-b pb-3 theme-border">
+                    <Megaphone className="w-5 h-5 text-rose-400" />
+                    <span>Announcement Banner & Page Headings</span>
+                  </h2>
+
+                  <div className="space-y-4">
+                    
+                    {/* Announcement Banner */}
+                    <div className="p-4 rounded-xl border theme-border theme-bg-secondary space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-bold theme-text-primary">
+                          Top Announcement Ticker Banner
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setShowAnnouncement(!showAnnouncement)}
+                          className={`px-3 py-1 rounded-lg text-xs font-black transition-all ${
+                            showAnnouncement ? 'bg-lime-500 text-slate-950' : 'bg-slate-800 text-slate-400'
+                          }`}
+                        >
+                          {showAnnouncement ? 'BANNER VISIBLE' : 'BANNER HIDDEN'}
+                        </button>
+                      </div>
+
+                      <input
+                        type="text"
+                        value={announcementText}
+                        onChange={(e) => setAnnouncementText(e.target.value)}
+                        placeholder="e.g. 🚀 Welcome to PlayMaster! Play 100+ free 3D games!"
+                        className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:border-lime-500 theme-card"
+                      />
+                    </div>
+
+                    {/* Footer Copyright Text */}
+                    <div>
+                      <label className="block text-xs font-bold theme-text-primary mb-1">
+                        Footer Copyright & Credits Text
+                      </label>
+                      <input
+                        type="text"
+                        value={footerText}
+                        onChange={(e) => setFooterText(e.target.value)}
+                        placeholder="e.g. PlayMaster 3D Platform. All rights reserved."
+                        className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:border-lime-500 theme-card"
+                      />
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* 4. FEATURE TOGGLES CARD */}
+                <div className="theme-card rounded-2xl p-6 border shadow-xl space-y-4">
+                  <h2 className="text-lg font-extrabold theme-text-primary flex items-center gap-2 border-b pb-3 theme-border">
+                    <Layout className="w-5 h-5 text-sky-400" />
+                    <span>Website Feature Visibility Toggles</span>
+                  </h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    
+                    <button
+                      type="button"
+                      onClick={() => setShowAiBuddy(!showAiBuddy)}
+                      className={`p-4 rounded-xl border text-left flex items-center justify-between transition-all ${
+                        showAiBuddy
+                          ? 'bg-lime-500/10 border-lime-500/40 text-lime-400'
+                          : 'bg-slate-900/40 border-slate-800 text-slate-500'
+                      }`}
+                    >
+                      <div>
+                        <p className="font-extrabold text-xs">GameAI Assistant Button</p>
+                        <p className="text-[10px] theme-text-secondary">Shows Ask GameAI in navbar</p>
+                      </div>
+                      <span className="font-black text-xs">{showAiBuddy ? 'ON' : 'OFF'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowMultiScreen(!showMultiScreen)}
+                      className={`p-4 rounded-xl border text-left flex items-center justify-between transition-all ${
+                        showMultiScreen
+                          ? 'bg-lime-500/10 border-lime-500/40 text-lime-400'
+                          : 'bg-slate-900/40 border-slate-800 text-slate-500'
+                      }`}
+                    >
+                      <div>
+                        <p className="font-extrabold text-xs">Multi-Screen Mode</p>
+                        <p className="text-[10px] theme-text-secondary">Shows multi-game split button</p>
+                      </div>
+                      <span className="font-black text-xs">{showMultiScreen ? 'ON' : 'OFF'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowFeatured3D(!showFeatured3D)}
+                      className={`p-4 rounded-xl border text-left flex items-center justify-between transition-all ${
+                        showFeatured3D
+                          ? 'bg-lime-500/10 border-lime-500/40 text-lime-400'
+                          : 'bg-slate-900/40 border-slate-800 text-slate-500'
+                      }`}
+                    >
+                      <div>
+                        <p className="font-extrabold text-xs">Featured 3D Section</p>
+                        <p className="text-[10px] theme-text-secondary">Shows 3D highlight section</p>
+                      </div>
+                      <span className="font-black text-xs">{showFeatured3D ? 'ON' : 'OFF'}</span>
+                    </button>
+
+                  </div>
+                </div>
+
+                {/* SAVE BUTTON BAR */}
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    disabled={configSaving}
+                    className="px-8 py-3.5 rounded-2xl bg-lime-500 hover:bg-lime-400 text-slate-950 font-black text-sm shadow-xl shadow-lime-500/20 transform hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>{configSaving ? 'SAVING REDESIGN...' : 'SAVE WEBSITE REDESIGN & THEMES'}</span>
+                  </button>
+                </div>
+
+              </form>
+            )}
+
           </>
         )}
 
