@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { GameItem, INITIAL_GAMES } from '@/lib/games-data';
 import { Grid2X2, LayoutList, Gamepad2, Plus, X, Maximize2 } from 'lucide-react';
 import Three3DGames from './Three3DGames';
+import { cleanEmbedUrl } from '@/lib/url-cleaner';
 
 interface MultiScreenPlayerProps {
   initialGameSlug?: string;
@@ -106,7 +107,7 @@ export default function MultiScreenPlayer({ initialGameSlug }: MultiScreenPlayer
                   </div>
 
                   {/* Game Viewport */}
-                  <div className="flex-1 w-full h-full bg-black">
+                  <div className="relative flex-1 w-full h-full bg-black overflow-hidden">
                     {game.gameType === 'THREEJS_3D' && game.threeEngineId ? (
                       <Three3DGames
                         engineId={game.threeEngineId as any}
@@ -114,9 +115,9 @@ export default function MultiScreenPlayer({ initialGameSlug }: MultiScreenPlayer
                       />
                     ) : (
                       <iframe
-                        src={game.embedUrl}
+                        src={cleanEmbedUrl(game.embedUrl)}
                         title={game.title}
-                        className="w-full h-full border-0 block"
+                        className="absolute inset-0 w-full h-full border-0 block"
                         style={{
                           width: '100%',
                           height: '100%',

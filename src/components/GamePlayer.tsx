@@ -190,7 +190,7 @@ export default function GamePlayer({ game }: GamePlayerProps) {
                 gameTitle={game.title}
               />
             ) : (
-              <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-black">
+              <div className="absolute inset-0 w-full h-full overflow-hidden bg-black flex items-center justify-center">
                 <iframe
                   src={directEmbedUrl}
                   title={game.title}

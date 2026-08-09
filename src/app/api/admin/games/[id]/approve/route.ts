@@ -40,3 +40,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     return NextResponse.json({ error: 'Server error updating game status' }, { status: 500 });
   }
 }
+
+export async function POST(req: Request, { params }: { params: { id: string } }) {
+  return PUT(req, { params });
+}
+
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  return PUT(req, { params });
+}

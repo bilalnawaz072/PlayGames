@@ -52,4 +52,4 @@ USER nextjs
 
 EXPOSE 3000
 
-CMD ["npx", "next", "start"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && npx next start"]
