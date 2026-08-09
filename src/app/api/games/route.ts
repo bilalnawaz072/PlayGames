@@ -40,20 +40,13 @@ export async function GET(req: Request) {
       dbGames = [];
     }
 
-    const dbSlugs = new Set(dbGames.map((g) => g.slug));
-    const dbIds = new Set(dbGames.map((g) => g.id));
-
-    // Combine database games with default built-in games (no duplicates)
-    const missingDefaults = INITIAL_GAMES.filter(
-      (g) => !dbSlugs.has(g.slug) && !dbIds.has(g.id)
-    );
-
     const formattedDbGames = dbGames.map((g) => ({
       ...g,
       tags: typeof g.tags === 'string' ? g.tags.split(',') : (Array.isArray(g.tags) ? g.tags : [g.category]),
     }));
 
-    let allGames = [...formattedDbGames, ...missingDefaults];
+    // Return DB games if present, otherwise fallback to INITIAL_GAMES
+    let allGames = formattedDbGames.length > 0 ? formattedDbGames : INITIAL_GAMES;
 
     // Filter by query (q)
     if (q) {
