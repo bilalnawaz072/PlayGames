@@ -1,0 +1,98 @@
+// Prisma Schema for Pay123 3D Game Platform
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PLAYER
+  DEVELOPER
+  SUPER_ADMIN
+}
+
+enum GameStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RatingType {
+  LIKE
+  DISLIKE
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         UserRole   @default(PLAYER)
+  avatar       String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  submittedGames Game[]     @relation("DeveloperGames")
+  favorites      Favorite[]
+  ratings        Rating[]
+}
+
+model Game {
+  id            String     @id @default(cuid())
+  title         String
+  slug          String     @unique
+  description   String
+  category      String
+  tags          String
+  thumbnailUrl  String
+  embedUrl      String
+  gameType      String     @default("IFRAME") // "THREEJS_3D" or "IFRAME"
+  threeEngineId String?    // Identifier for 3D mini-games e.g. "WAVE_DASH", "CYBER_DRIFT", "CUBE_STACK", "TUNNEL_RUNNER"
+  isFeatured    Boolean    @default(false)
+  isApproved    Boolean    @default(true)
+  status        GameStatus @default(APPROVED)
+  playsCount    Int        @default(0)
+  likesCount    Int        @default(0)
+  dislikesCount Int        @default(0)
+  developerId   String?
+  developer     User?      @relation("DeveloperGames", fields: [developerId], references: [id], onDelete: SetNull)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  favorites Favorite[]
+  ratings   Rating[]
+}
+
+model Category {
+  id       String @id @default(cuid())
+  name     String @unique
+  slug     String @unique
+  iconName String
+  order    Int    @default(0)
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  gameId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, gameId])
+}
+
+model Rating {
+  id        String     @id @default(cuid())
+  userId    String
+  gameId    String
+  type      RatingType
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game      Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+
+  @@unique([userId, gameId])
+}
