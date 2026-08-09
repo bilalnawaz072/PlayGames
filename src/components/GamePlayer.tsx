@@ -6,12 +6,14 @@ import { Play, ThumbsUp, ThumbsDown, Share2, Heart, Maximize2, Layers, Check, Sm
 import { GameItem } from '@/lib/games-data';
 import { cleanEmbedUrl } from '@/lib/url-cleaner';
 import Three3DGames from './Three3DGames';
+import { useDataUpdate } from './DataUpdateContext';
 
 interface GamePlayerProps {
   game: GameItem;
 }
 
 export default function GamePlayer({ game }: GamePlayerProps) {
+  const { triggerUpdate } = useDataUpdate();
   const [isPlaying, setIsPlaying] = useState(false);
   const [likes, setLikes] = useState(game.likesCount || 0);
   const [dislikes, setDislikes] = useState(game.dislikesCount || 0);
@@ -60,14 +62,18 @@ export default function GamePlayer({ game }: GamePlayerProps) {
     }
     setHasRated(type);
 
-    try {
-      localStorage.setItem(`gamevault_rated_${game.id}`, type);
-      await fetch(`/api/games/${game.id}/rate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type }),
-      });
-    } catch (e) {}
+    await triggerUpdate(
+      async () => {
+        localStorage.setItem(`gamevault_rated_${game.id}`, type);
+        await fetch(`/api/games/${game.id}/rate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type }),
+        });
+      },
+      `Saving game ${type === 'LIKE' ? 'upvote' : 'downvote'}...`,
+      `Thank you! Game rating updated.`
+    ).catch(() => {});
   };
 
   // Cross-device Mobile & Desktop Native Fullscreen Handler

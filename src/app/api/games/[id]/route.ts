@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { INITIAL_GAMES } from '@/lib/games-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,14 +13,20 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       },
     });
 
-    if (!game) {
-      return NextResponse.json({ error: 'Game not found' }, { status: 404 });
+    if (game) {
+      return NextResponse.json({ game });
     }
-
-    return NextResponse.json({ game });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch game' }, { status: 500 });
+  } catch (error: any) {
+    console.warn('PostgreSQL DB query error in /api/games/[id] (using fallback games):', error?.message || error);
   }
+
+  // Fallback to searching INITIAL_GAMES if DB is not populated or table missing
+  const fallbackGame = INITIAL_GAMES.find((g) => g.id === params.id || g.slug === params.id);
+  if (fallbackGame) {
+    return NextResponse.json({ game: fallbackGame });
+  }
+
+  return NextResponse.json({ error: 'Game not found' }, { status: 404 });
 }
 
 // PUT / UPDATE game in PostgreSQL DB

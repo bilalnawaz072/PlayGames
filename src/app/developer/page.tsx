@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { Code, Plus, Gamepad2, CheckCircle, Clock, AlertCircle, Eye, ThumbsUp, Upload, Sparkles, ShieldAlert, LogIn, Lock, Copy, Check, Trash2 } from 'lucide-react';
 import { INITIAL_CATEGORIES, GameItem } from '@/lib/games-data';
 import { getAutoUnsplashImage } from '@/lib/unsplash-helper';
+import { useDataUpdate } from '@/components/DataUpdateContext';
+import { InlineUpdateProgressBar } from '@/components/UpdateProgressBar';
 
 export default function DeveloperPortalPage() {
   const [user, setUser] = useState<any>(null);
@@ -37,6 +39,7 @@ export default function DeveloperPortalPage() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const { startUpdating, finishUpdating, failUpdating, triggerUpdate } = useDataUpdate();
 
   useEffect(() => {
     checkAuth();
@@ -90,67 +93,78 @@ export default function DeveloperPortalPage() {
 
   const handleDuplicateGame = async (game: GameItem) => {
     setLoading(true);
-    try {
-      const newTitle = `${game.title} (Copy)`;
-      const finalImage = game.thumbnailUrl || getAutoUnsplashImage(game.category, newTitle);
+    await triggerUpdate(
+      async () => {
+        const newTitle = `${game.title} (Copy)`;
+        const finalImage = game.thumbnailUrl || getAutoUnsplashImage(game.category, newTitle);
 
-      const res = await fetch('/api/games', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: newTitle,
-          description: game.description,
-          category: game.category,
-          thumbnailUrl: finalImage,
-          embedUrl: game.embedUrl,
-          gameType: game.gameType,
-          threeEngineId: game.threeEngineId,
-          tags: Array.isArray(game.tags) ? game.tags : [game.category],
-        }),
-      });
+        const res = await fetch('/api/games', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: newTitle,
+            description: game.description,
+            category: game.category,
+            thumbnailUrl: finalImage,
+            embedUrl: game.embedUrl,
+            gameType: game.gameType,
+            threeEngineId: game.threeEngineId,
+            tags: Array.isArray(game.tags) ? game.tags : [game.category],
+          }),
+        });
 
-      if (res.ok) {
-        fetchDeveloperGames();
-      } else {
-        alert('Failed to duplicate game.');
-      }
-    } catch (err) {
-      alert('Error duplicating game.');
-    } finally {
+        if (res.ok) {
+          fetchDeveloperGames();
+        } else {
+          throw new Error('Failed to duplicate game.');
+        }
+      },
+      `Duplicating game "${game.title}"...`,
+      `✨ Game "${game.title}" duplicated!`
+    ).catch((err) => {
+      alert(err.message || 'Error duplicating game.');
+    }).finally(() => {
       setLoading(false);
-    }
+    });
   };
 
   const confirmDeleteGame = async (gameId: string) => {
     setDeleteLoading(true);
-    try {
-      const res = await fetch(`/api/games/${gameId}`, {
-        method: 'DELETE',
-      });
+    await triggerUpdate(
+      async () => {
+        const res = await fetch(`/api/games/${gameId}`, {
+          method: 'DELETE',
+        });
 
-      if (res.ok) {
-        setUserGames((prev) => prev.filter((g) => g.id !== gameId));
-        setGameToDelete(null);
-      } else {
-        alert('Failed to delete game.');
-      }
-    } catch (err) {
-      alert('Error deleting game.');
-    } finally {
+        if (res.ok) {
+          setUserGames((prev) => prev.filter((g) => g.id !== gameId));
+          setGameToDelete(null);
+        } else {
+          throw new Error('Failed to delete game.');
+        }
+      },
+      'Deleting game from developer portal...',
+      '🗑️ Game deleted successfully!'
+    ).catch((err) => {
+      alert(err.message || 'Error deleting game.');
+    }).finally(() => {
       setDeleteLoading(false);
-    }
+    });
   };
 
   const handlePublishGame = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
+    startUpdating(`Submitting game "${title}" to database...`);
 
     let finalThumbnail = thumbnailUrl.trim();
     if (!finalThumbnail) {
       finalThumbnail = getAutoUnsplashImage(category, title);
       setThumbnailUrl(finalThumbnail);
     }
+
+    const startTime = Date.now();
 
     try {
       const res = await fetch('/api/games', {
@@ -169,8 +183,12 @@ export default function DeveloperPortalPage() {
       });
 
       const data = await res.json();
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 1200) await new Promise((r) => setTimeout(r, 1200 - elapsed));
+
       if (!res.ok) {
         setMessage({ type: 'error', text: data.error || 'Failed to submit game.' });
+        failUpdating(data.error || 'Failed to submit game.');
         setLoading(false);
         return;
       }
@@ -179,6 +197,7 @@ export default function DeveloperPortalPage() {
         type: 'success',
         text: '🎉 Game submitted to GameVault DB! Sent to Super Admin for approval.',
       });
+      finishUpdating('🎉 Game submitted! Pending Super Admin review.');
       setLoading(false);
       setShowForm(false);
       fetchDeveloperGames();
@@ -187,8 +206,10 @@ export default function DeveloperPortalPage() {
       setDescription('');
       setThumbnailUrl('');
       setEmbedUrl('');
+      setImgLoadStatus('idle');
     } catch (err) {
       setMessage({ type: 'error', text: 'Error connecting to server.' });
+      failUpdating('Connection error submitting game.');
       setLoading(false);
     }
   };
@@ -281,6 +302,13 @@ export default function DeveloperPortalPage() {
                   <Upload className="w-5 h-5 text-sky-400" />
                   <span>Developer Game Submission</span>
                 </h2>
+
+                {loading && (
+                  <InlineUpdateProgressBar
+                    progress={70}
+                    message="Submitting game details & images to database..."
+                  />
+                )}
 
                 <form onSubmit={handlePublishGame} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

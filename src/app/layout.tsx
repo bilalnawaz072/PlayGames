@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { SiteConfigProvider } from '@/components/SiteConfigProvider';
+import { DataUpdateProvider } from '@/components/DataUpdateContext';
+import UpdateProgressBar from '@/components/UpdateProgressBar';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -23,9 +25,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen antialiased selection:bg-lime-400 selection:text-slate-950">
-        <SiteConfigProvider>
-          <ThemeProvider>{children}</ThemeProvider>
-        </SiteConfigProvider>
+        <DataUpdateProvider>
+          <UpdateProgressBar />
+          <SiteConfigProvider>
+            <ThemeProvider>{children}</ThemeProvider>
+          </SiteConfigProvider>
+        </DataUpdateProvider>
       </body>
     </html>
   );

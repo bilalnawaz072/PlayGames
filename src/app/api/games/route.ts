@@ -1,7 +1,29 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { INITIAL_GAMES } from '@/lib/games-data';
 
 export const dynamic = 'force-dynamic';
+
+function filterFallbackGames(q: string, category: string, sort: string) {
+  let list = [...INITIAL_GAMES];
+  if (q) {
+    list = list.filter(
+      (g) =>
+        g.title.toLowerCase().includes(q) ||
+        g.description.toLowerCase().includes(q) ||
+        g.category.toLowerCase().includes(q) ||
+        g.tags.some((t) => t.toLowerCase().includes(q))
+    );
+  }
+  if (category && category.toLowerCase() !== 'all') {
+    list = list.filter((g) => g.category.toLowerCase() === category.toLowerCase());
+  }
+  if (sort === 'newest') list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  if (sort === 'rating') list.sort((a, b) => b.likesCount - a.likesCount);
+  if (sort === 'title') list.sort((a, b) => a.title.localeCompare(b.title));
+  if (sort === 'popular') list.sort((a, b) => b.playsCount - a.playsCount);
+  return list;
+}
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -35,14 +57,22 @@ export async function GET(req: Request) {
       orderBy,
     });
 
-    const formatted = dbGames.map((g) => ({
-      ...g,
-      tags: typeof g.tags === 'string' ? g.tags.split(',') : g.tags,
-    }));
-    return NextResponse.json({ games: formatted });
-  } catch (err) {
-    console.error('PostgreSQL DB query error in /api/games:', err);
-    return NextResponse.json({ games: [] });
+    if (dbGames && dbGames.length > 0) {
+      const formatted = dbGames.map((g) => ({
+        ...g,
+        tags: typeof g.tags === 'string' ? g.tags.split(',') : g.tags,
+      }));
+      return NextResponse.json({ games: formatted });
+    }
+
+    // If database returned 0 games, return fallback games
+    const fallbackList = filterFallbackGames(q, category, sort);
+    return NextResponse.json({ games: fallbackList });
+  } catch (err: any) {
+    console.warn('PostgreSQL DB query error in /api/games (using default fallback games):', err?.message || err);
+    // If DB error (e.g. P2021 table missing), return fallback games so app never crashes
+    const fallbackList = filterFallbackGames(q, category, sort);
+    return NextResponse.json({ games: fallbackList });
   }
 }
 

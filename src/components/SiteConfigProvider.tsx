@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useDataUpdate } from './DataUpdateContext';
 
 export interface SiteConfig {
   siteName: string;
@@ -55,6 +56,7 @@ const SiteConfigContext = createContext<SiteConfigContextType>({
 export function SiteConfigProvider({ children }: { children: React.ReactNode }) {
   const [config, setConfig] = useState<SiteConfig>(DEFAULT_SITE_CONFIG);
   const [loading, setLoading] = useState(true);
+  const { startUpdating, finishUpdating, failUpdating } = useDataUpdate();
 
   useEffect(() => {
     fetchConfig();
@@ -88,6 +90,9 @@ export function SiteConfigProvider({ children }: { children: React.ReactNode }) 
     setConfig(merged);
     localStorage.setItem('gamevault_site_config', JSON.stringify(merged));
 
+    startUpdating('Updating website configuration & theme settings...');
+
+    const startTime = Date.now();
     try {
       const res = await fetch('/api/site-config', {
         method: 'PUT',
@@ -96,17 +101,27 @@ export function SiteConfigProvider({ children }: { children: React.ReactNode }) 
       });
 
       const data = await res.json().catch(() => ({}));
+
+      // Ensure progress bar stays visible for smooth visual feedback (~1.2s)
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 1200) {
+        await new Promise((r) => setTimeout(r, 1200 - elapsed));
+      }
+
       if (res.ok) {
         if (data.config) {
           setConfig(data.config);
           localStorage.setItem('gamevault_site_config', JSON.stringify(data.config));
         }
+        finishUpdating('🎉 Website branding & settings updated!');
         return true;
       }
       console.error('Error saving site config:', data.error || 'Server error');
+      failUpdating(data.error || 'Failed to update site configuration.');
       return false;
     } catch (e) {
       console.error('Error saving site config:', e);
+      failUpdating('Network error updating site configuration.');
       return false;
     }
   };

@@ -8,6 +8,8 @@ import { Plus, Edit2, Trash2, ExternalLink, Gamepad2, Upload, AlertCircle, Check
 import { INITIAL_CATEGORIES, GameItem } from '@/lib/games-data';
 import { getAutoUnsplashImage } from '@/lib/unsplash-helper';
 import { useSiteConfig } from '@/components/SiteConfigProvider';
+import { useDataUpdate } from '@/components/DataUpdateContext';
+import { InlineUpdateProgressBar } from '@/components/UpdateProgressBar';
 
 export default function AdminPage() {
   const [user, setUser] = useState<any>(null);
@@ -51,6 +53,7 @@ export default function AdminPage() {
 
   // WEBSITE CUSTOMIZATION STUDIO STATE
   const { config, updateConfig } = useSiteConfig();
+  const { startUpdating, finishUpdating, failUpdating, triggerUpdate } = useDataUpdate();
   const [customSiteName, setCustomSiteName] = useState(config.siteName);
   const [customSiteTagline, setCustomSiteTagline] = useState(config.siteTagline);
   const [customLogoUrl, setCustomLogoUrl] = useState(config.logoUrl || '');
@@ -250,35 +253,39 @@ export default function AdminPage() {
 
   const handleDuplicateGame = async (game: GameItem) => {
     setLoading(true);
-    try {
-      const newTitle = `${game.title} (Copy)`;
-      const finalImage = game.thumbnailUrl || getAutoUnsplashImage(game.category, newTitle);
+    await triggerUpdate(
+      async () => {
+        const newTitle = `${game.title} (Copy)`;
+        const finalImage = game.thumbnailUrl || getAutoUnsplashImage(game.category, newTitle);
 
-      const res = await fetch('/api/games', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: newTitle,
-          description: game.description,
-          category: game.category,
-          thumbnailUrl: finalImage,
-          embedUrl: game.embedUrl,
-          gameType: game.gameType,
-          threeEngineId: game.threeEngineId,
-          tags: Array.isArray(game.tags) ? game.tags : [game.category],
-        }),
-      });
+        const res = await fetch('/api/games', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: newTitle,
+            description: game.description,
+            category: game.category,
+            thumbnailUrl: finalImage,
+            embedUrl: game.embedUrl,
+            gameType: game.gameType,
+            threeEngineId: game.threeEngineId,
+            tags: Array.isArray(game.tags) ? game.tags : [game.category],
+          }),
+        });
 
-      if (res.ok) {
-        fetchGames();
-      } else {
-        alert('Failed to duplicate game.');
-      }
-    } catch (err) {
-      alert('Error duplicating game.');
-    } finally {
+        if (res.ok) {
+          fetchGames();
+        } else {
+          throw new Error('Failed to duplicate game.');
+        }
+      },
+      `Duplicating game "${game.title}"...`,
+      `✨ Game "${game.title}" duplicated successfully!`
+    ).catch((err) => {
+      alert(err.message || 'Error duplicating game.');
+    }).finally(() => {
       setLoading(false);
-    }
+    });
   };
 
   const handleAutoFillImage = () => {
@@ -291,6 +298,7 @@ export default function AdminPage() {
     e.preventDefault();
     setFormLoading(true);
     setFeedback(null);
+    startUpdating(editingGame ? `Updating game "${title}"...` : `Creating new game "${title}"...`);
 
     let finalThumbnail = thumbnailUrl.trim();
     if (!finalThumbnail) {
@@ -299,6 +307,7 @@ export default function AdminPage() {
     }
 
     const finalEmbed = embedUrl.trim() || (gameType === 'THREEJS_3D' ? '/#' : 'https://html5.gamedistribution.com/rvvASyc0/c70c1e82845d4c82b49b380ed5b4b1a4/index.html');
+    const startTime = Date.now();
 
     try {
       if (editingGame) {
@@ -317,13 +326,18 @@ export default function AdminPage() {
           }),
         });
 
+        const elapsed = Date.now() - startTime;
+        if (elapsed < 1200) await new Promise((r) => setTimeout(r, 1200 - elapsed));
+
         if (res.ok) {
           setFeedback({ type: 'success', text: '✨ Game updated successfully!' });
+          finishUpdating('✨ Game details updated in database!');
           fetchGames();
           setTimeout(() => setIsModalOpen(false), 1000);
         } else {
           const data = await res.json();
           setFeedback({ type: 'error', text: data.error || 'Failed to update game.' });
+          failUpdating(data.error || 'Failed to update game.');
         }
       } else {
         const res = await fetch('/api/games', {
@@ -341,17 +355,23 @@ export default function AdminPage() {
           }),
         });
 
+        const elapsed = Date.now() - startTime;
+        if (elapsed < 1200) await new Promise((r) => setTimeout(r, 1200 - elapsed));
+
         if (res.ok) {
           setFeedback({ type: 'success', text: '🎉 New game created & published!' });
+          finishUpdating('🎉 New game created & published!');
           fetchGames();
           setTimeout(() => setIsModalOpen(false), 1000);
         } else {
           const data = await res.json();
           setFeedback({ type: 'error', text: data.error || 'Failed to create game.' });
+          failUpdating(data.error || 'Failed to create game.');
         }
       }
     } catch (err) {
       setFeedback({ type: 'error', text: 'Connection error while saving game.' });
+      failUpdating('Connection error while saving game.');
     } finally {
       setFormLoading(false);
     }
@@ -359,22 +379,26 @@ export default function AdminPage() {
 
   const confirmDeleteGame = async (gameId: string) => {
     setDeleteLoading(true);
-    try {
-      const res = await fetch(`/api/games/${gameId}`, {
-        method: 'DELETE',
-      });
+    await triggerUpdate(
+      async () => {
+        const res = await fetch(`/api/games/${gameId}`, {
+          method: 'DELETE',
+        });
 
-      if (res.ok) {
-        setGames((prev) => prev.filter((g) => g.id !== gameId));
-        setGameToDelete(null);
-      } else {
-        alert('Failed to delete game.');
-      }
-    } catch (err) {
-      alert('Error deleting game.');
-    } finally {
+        if (res.ok) {
+          setGames((prev) => prev.filter((g) => g.id !== gameId));
+          setGameToDelete(null);
+        } else {
+          throw new Error('Failed to delete game.');
+        }
+      },
+      'Deleting game from database...',
+      '🗑️ Game deleted successfully!'
+    ).catch((err) => {
+      alert(err.message || 'Error deleting game.');
+    }).finally(() => {
       setDeleteLoading(false);
-    }
+    });
   };
 
   const filteredGames = games.filter(
@@ -977,6 +1001,13 @@ export default function AdminPage() {
               <Upload className="w-5 h-5 text-lime-400" />
               <span>{editingGame ? 'Update Game Details' : 'Add New Game'}</span>
             </h2>
+
+            {formLoading && (
+              <InlineUpdateProgressBar
+                progress={75}
+                message={editingGame ? 'Saving game updates...' : 'Publishing new game...'}
+              />
+            )}
 
             {feedback && (
               <div
