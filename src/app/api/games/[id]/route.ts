@@ -98,13 +98,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 // DELETE game from PostgreSQL DB
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   try {
-    try {
-      await prisma.game.delete({
-        where: { id: params.id },
-      });
-    } catch (e) {
-      console.warn('Prisma game delete fallback:', e);
-    }
+    await prisma.game.deleteMany({
+      where: {
+        OR: [{ id: params.id }, { slug: params.id }],
+      },
+    });
     return NextResponse.json({ success: true, message: 'Game deleted successfully from database.' });
   } catch (error) {
     console.error('Error deleting game from database:', error);

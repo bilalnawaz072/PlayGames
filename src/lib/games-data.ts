@@ -50,23 +50,4 @@ export const INITIAL_CATEGORIES: CategoryItem[] = [
   { id: 'cat-10x10', name: '10x10', slug: '10x10', iconName: 'LayoutGrid' },
 ];
 
-export const INITIAL_GAMES: GameItem[] = [
-  {
-    id: 'game-element-blocks',
-    title: 'Element Blocks',
-    slug: 'element-blocks',
-    description: 'Drag and place wooden element blocks onto the grid. Fill horizontal or vertical lines to clear blocks and score massive combo points in this addictive puzzle game!',
-    category: 'Puzzle',
-    tags: ['puzzle', 'blocks', 'logic', 'famobi', 'brain'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
-    embedUrl: 'https://play.famobi.com/wrapper/element-blocks/A1000-10',
-    gameType: 'IFRAME',
-    isFeatured: true,
-    isApproved: true,
-    status: 'APPROVED',
-    playsCount: 1420,
-    likesCount: 280,
-    dislikesCount: 5,
-    createdAt: new Date().toISOString(),
-  },
-];
+export const INITIAL_GAMES: GameItem[] = [];

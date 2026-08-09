@@ -40,13 +40,10 @@ export async function GET(req: Request) {
       dbGames = [];
     }
 
-    const formattedDbGames = dbGames.map((g) => ({
+    let allGames = dbGames.map((g) => ({
       ...g,
       tags: typeof g.tags === 'string' ? g.tags.split(',') : (Array.isArray(g.tags) ? g.tags : [g.category]),
     }));
-
-    // Return DB games if present, otherwise fallback to INITIAL_GAMES
-    let allGames = formattedDbGames.length > 0 ? formattedDbGames : INITIAL_GAMES;
 
     // Filter by query (q)
     if (q) {
@@ -76,8 +73,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ games: allGames });
   } catch (err: any) {
-    const fallbackList = filterFallbackGames(q, category, sort);
-    return NextResponse.json({ games: fallbackList });
+    return NextResponse.json({ games: [] });
   }
 }
 
