@@ -11,7 +11,7 @@ RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 COPY package.json pnpm-lock.yaml* package-lock.json* ./
 COPY prisma ./prisma/
 
-RUN if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; elif [ -f package-lock.json ]; then npm ci; else npm install; fi
+RUN if [ -f pnpm-lock.yaml ]; then pnpm install --no-frozen-lockfile; elif [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 # Rebuild the source code only when needed
 FROM base AS builder
